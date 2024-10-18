@@ -1,0 +1,44 @@
+trigger:
+- main
+
+pool:
+  name: 'Default'
+
+jobs:
+- job: BuildAndTest
+  displayName: 'Build, Test, and Run GitLeaks'
+  pool:
+    name: 'Default'
+    demands:
+      - agent.name -equals DESKTOP-8V8G98L
+
+  steps:
+  # Step to checkout the code
+  - checkout: self
+
+  # Step to set the JAVA_HOME environment variable
+  - script: |
+      echo "##vso[task.setvariable variable=JAVA_HOME]C:\Program Files\Java\jdk-17"
+      echo "JAVA_HOME is set to %JAVA_HOME%"
+    displayName: 'Set JAVA_HOME'
+
+  # Step to run Maven build
+  - task: Maven@4
+    inputs:
+      mavenPomFile: 'pom.xml'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      javaHomeOption: 'Path'
+      jdkDirectory: 'C:\Program Files\Java\jdk-17'
+      mavenVersionOption: 'Path'
+      mavenDirectory: 'C:\Program Files\apache-maven-3.9.6'
+      mavenSetM2Home: true
+      mavenAuthenticateFeed: false
+      effectivePomSkip: false
+      sonarQubeRunAnalysis: false
+      goals: 'clean install'
+
+  # Step to run unit tests
+  - script: mvn test
+    displayName: 'Run unit tests'
+
