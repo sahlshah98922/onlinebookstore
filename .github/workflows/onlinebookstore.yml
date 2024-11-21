@@ -1,0 +1,45 @@
+name: Deploy Java Application to Tomcat
+
+on:
+  push:
+    branches:
+      - main  # Triggers the pipeline on pushes to the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest  # Use 'self-hosted' if running on your Oracle Linux/Red Hat machine
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set Up Java 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: 17
+        distribution: 'temurin'  # Use 'zulu' if preferred
+
+    - name: Build Application with Maven
+      run: mvn clean package
+
+    # - name: Deploy to Tomcat
+    #   env:
+    #     TOMCAT_USER: ${{ secrets.TOMCAT_USER }}
+    #     TOMCAT_PASSWORD: ${{ secrets.TOMCAT_PASSWORD }}
+    #     TOMCAT_HOST: ${{ secrets.TOMCAT_HOST }}
+    #     TOMCAT_PORT: ${{ secrets.TOMCAT_PORT }}
+    #     TOMCAT_APP_PATH: ${{ secrets.TOMCAT_APP_PATH }}
+    #   run: |
+    #     # Define WAR file path
+    #     WAR_FILE=target/*.war
+
+    #     echo "Deploying the WAR file to the Tomcat server on ${TOMCAT_HOST}"
+
+    #     # Securely copy WAR file to the Tomcat webapps directory
+    #     scp -o StrictHostKeyChecking=no $WAR_FILE ${TOMCAT_USER}@${TOMCAT_HOST}:${TOMCAT_APP_PATH}
+
+    #     echo "Restarting Tomcat server"
+    #     # Restart the Tomcat server
+    #     ssh -o StrictHostKeyChecking=no ${TOMCAT_USER}@${TOMCAT_HOST} << 'EOF'
+    #     sudo systemctl restart tomcat
+    #     EOF
