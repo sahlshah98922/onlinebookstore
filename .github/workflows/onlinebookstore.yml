@@ -22,24 +22,24 @@ jobs:
     - name: Build Application with Maven
       run: mvn clean package
 
-    # - name: Deploy to Tomcat
-    #   env:
-    #     TOMCAT_USER: ${{ secrets.TOMCAT_USER }}
-    #     TOMCAT_PASSWORD: ${{ secrets.TOMCAT_PASSWORD }}
-    #     TOMCAT_HOST: ${{ secrets.TOMCAT_HOST }}
-    #     TOMCAT_PORT: ${{ secrets.TOMCAT_PORT }}
-    #     TOMCAT_APP_PATH: ${{ secrets.TOMCAT_APP_PATH }}
-    #   run: |
-    #     # Define WAR file path
-    #     WAR_FILE=target/*.war
+    - name: Deploy to Tomcat
+      env:
+        TOMCAT_USER: ${{ secrets.admin }}
+        TOMCAT_PASSWORD: ${{ secrets.admin }}
+        TOMCAT_HOST: ${{ secrets.localhost }}
+        TOMCAT_PORT: ${{ secrets.8081 }}
+        TOMCAT_APP_PATH: ${{ secrets.C:\Program Files\Apache Software Foundation }}
+      run: |
+        # Define WAR file path
+        WAR_FILE=target/*.war
 
-    #     echo "Deploying the WAR file to the Tomcat server on ${TOMCAT_HOST}"
+        echo "Deploying the WAR file to the Tomcat server on ${TOMCAT_HOST}"
 
-    #     # Securely copy WAR file to the Tomcat webapps directory
-    #     scp -o StrictHostKeyChecking=no $WAR_FILE ${TOMCAT_USER}@${TOMCAT_HOST}:${TOMCAT_APP_PATH}
+        # Securely copy WAR file to the Tomcat webapps directory
+        scp -o StrictHostKeyChecking=no $WAR_FILE ${admin}@${localhost}:${C:\Program Files\Apache Software Foundation}
 
-    #     echo "Restarting Tomcat server"
-    #     # Restart the Tomcat server
-    #     ssh -o StrictHostKeyChecking=no ${TOMCAT_USER}@${TOMCAT_HOST} << 'EOF'
-    #     sudo systemctl restart tomcat
-    #     EOF
+        echo "Restarting Tomcat server"
+        # Restart the Tomcat server
+        ssh -o StrictHostKeyChecking=no ${admin}@${localhost} << 'EOF'
+        sudo systemctl restart tomcat
+        EOF
