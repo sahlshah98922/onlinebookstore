@@ -26,20 +26,21 @@ jobs:
       env:
         TOMCAT_USER: ${{ secrets.admin }}
         TOMCAT_PASSWORD: ${{ secrets.admin }}
-        TOMCAT_HOST: ${{ secrets.localhost }}
-        TOMCAT_PORT: ${{ secrets.8081 }}
-        TOMCAT_APP_PATH: ${{ secrets.C:\Program Files\Apache Software Foundation }}
+        TOMCAT_HOST: 192.168.94.24
+        TOMCAT_PORT: 8081
+        TOMCAT_APP_PATH: ${{ secrets.C:\Program Files\Apache Software Foundation }}  # Ensure this is set in your secrets
       run: |
         # Define WAR file path
         WAR_FILE=target/*.war
-
-        echo "Deploying the WAR file to the Tomcat server on ${TOMCAT_HOST}"
-
+    
+        echo "Deploying the WAR file to the Tomcat server on ${TOMCAT_HOST}:${TOMCAT_PORT}"
+    
         # Securely copy WAR file to the Tomcat webapps directory
-        scp -o StrictHostKeyChecking=no $WAR_FILE ${admin}@${localhost}:${C:\Program Files\Apache Software Foundation}
-
+        scp -o StrictHostKeyChecking=no $WAR_FILE ${TOMCAT_USER}@${TOMCAT_HOST}:${TOMCAT_APP_PATH}/webapps/
+    
         echo "Restarting Tomcat server"
         # Restart the Tomcat server
-        ssh -o StrictHostKeyChecking=no ${admin}@${localhost} << 'EOF'
+        ssh -o StrictHostKeyChecking=no ${TOMCAT_USER}@${TOMCAT_HOST} << EOF
         sudo systemctl restart tomcat
         EOF
+    
