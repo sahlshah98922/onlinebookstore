@@ -24,11 +24,11 @@ jobs:
 
     - name: Deploy to Tomcat
       env:
-        TOMCAT_USER: ${{ secrets.admin }}
-        TOMCAT_PASSWORD: ${{ secrets.admin }}
+        TOMCAT_USER: ${{ secrets.tomcat_USER }}
+        TOMCAT_PASSWORD: ${{ secrets.tomcat_PASS }}
         TOMCAT_HOST: 192.168.166.1
         TOMCAT_PORT: 8081
-        TOMCAT_APP_PATH: ${{ secrets.onlinebookstore }}  # Ensure this is set in your secrets
+        TOMCAT_APP_PATH: ${{ secrets.TOMCAT_APP_PATH }}  # Ensure this is set in your secrets
       run: |
         # Define WAR file path
         WAR_FILE=target/*.war
