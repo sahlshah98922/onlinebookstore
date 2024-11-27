@@ -26,7 +26,7 @@ jobs:
       env:
         TOMCAT_USER: ${{ secrets.admin }}
         TOMCAT_PASSWORD: ${{ secrets.admin }}
-        TOMCAT_HOST: 192.168.94.24
+        TOMCAT_HOST: 192.168.166.1
         TOMCAT_PORT: 8081
         TOMCAT_APP_PATH: ${{ secrets.onlinebookstore }}  # Ensure this is set in your secrets
       run: |
