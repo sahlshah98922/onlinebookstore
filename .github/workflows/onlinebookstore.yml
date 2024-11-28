@@ -1,4 +1,4 @@
-name: Deploy Java Application to Tomcat
+name: Deploy Java Application to Tomcat on Windows
 
 on:
   push:
@@ -7,8 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest  # Use 'self-hosted' if running on your Oracle Linux/Red Hat machine
-
+    runs-on: ubuntu-latest  # The GitHub runner
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
@@ -17,30 +16,34 @@ jobs:
       uses: actions/setup-java@v3
       with:
         java-version: 17
-        distribution: 'temurin'  # Use 'zulu' if preferred
+        distribution: 'temurin'
 
     - name: Build Application with Maven
       run: mvn clean package
 
-    - name: Deploy to Tomcat
+    - name: Deploy to Windows Tomcat
       env:
-        TOMCAT_USER: ${{ secrets.tomcat_USER }}
-        TOMCAT_PASSWORD: ${{ secrets.tomcat_PASS }}
+        TOMCAT_USER: ${{ secrets.TOMCAT_USER }}
+        TOMCAT_PASSWORD: ${{ secrets.TOMCAT_PASSWORD }}
         TOMCAT_HOST: 192.168.166.1
         TOMCAT_PORT: 8081
-        TOMCAT_APP_PATH: ${{ secrets.TOMCAT_APP_PATH }}  # Ensure this is set in your secrets
+        TOMCAT_APP_PATH: ${{ secrets.TOMCAT_APP_PATH }}  # Ensure the correct path on Windows
       run: |
         # Define WAR file path
         WAR_FILE=target/*.war
-    
+
         echo "Deploying the WAR file to the Tomcat server on ${TOMCAT_HOST}:${TOMCAT_PORT}"
-    
-        # Securely copy WAR file to the Tomcat webapps directory
-        scp -o StrictHostKeyChecking=no $WAR_FILE ${TOMCAT_USER}@${TOMCAT_HOST}:${TOMCAT_APP_PATH}/webapps/
-    
-        echo "Restarting Tomcat server"
-        # Restart the Tomcat server
-        ssh -o StrictHostKeyChecking=no ${TOMCAT_USER}@${TOMCAT_HOST} << EOF
-        sudo systemctl restart tomcat
-        EOF
-    
+
+        # Check if the WAR file exists
+        if ls $WAR_FILE 1> /dev/null 2>&1; then
+          echo "WAR file found: $(ls $WAR_FILE)"
+        else
+          echo "WAR file not found in target/ directory. Exiting."
+          exit 1
+        fi
+
+        # Copy the WAR file to the Tomcat webapps directory on Windows using WinRM
+        echo "Copying WAR file to Windows Tomcat server..."
+        curl -u ${TOMCAT_USER}:${TOMCAT_PASSWORD} --ntlm --upload-file $WAR_FILE "http://${TOMCAT_HOST}:${TOMCAT_PORT}/manager/text/deploy?path=/your-app-context&update=true"
+
+        echo "WAR file successfully deployed to Tomcat on Windows."
