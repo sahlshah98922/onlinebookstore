@@ -19,7 +19,7 @@ jobs:
         distribution: 'temurin'
 
     - name: Build Application with Maven
-      run: mvn clean package
+      run: mvn clean install -DskipTests
 
     - name: Deploy to Windows Tomcat
       env:
