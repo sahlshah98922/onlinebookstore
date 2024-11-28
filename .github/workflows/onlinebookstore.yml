@@ -25,7 +25,7 @@ jobs:
       env:
         TOMCAT_USER: ${{ secrets.TOMCAT_USER }}
         TOMCAT_PASSWORD: ${{ secrets.TOMCAT_PASSWORD }}
-        TOMCAT_HOST: 192.168.166.1
+        TOMCAT_HOST: localhost
         TOMCAT_PORT: 8081
         TOMCAT_APP_PATH: ${{ secrets.TOMCAT_APP_PATH }}  # Ensure the correct path on Windows
       run: |
