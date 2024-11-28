@@ -24,8 +24,8 @@ jobs:
     - name: Deploy to Windows Tomcat
       env:
         TOMCAT_USER: ${{ secrets.TOMCAT_USER }}
-        TOMCAT_PASSWORD: ${{ secrets.TOMCAT_PASSWORD }}
-        TOMCAT_HOST: localhost
+        TOMCAT_PASS: ${{ secrets.TOMCAT_PASS }}
+        TOMCAT_HOST: localhost  # Use the IP of your Windows machine if not local
         TOMCAT_PORT: 8081
         TOMCAT_APP_PATH: ${{ secrets.TOMCAT_APP_PATH }}  # Ensure the correct path on Windows
       run: |
@@ -42,8 +42,8 @@ jobs:
           exit 1
         fi
 
-        # Copy the WAR file to the Tomcat webapps directory on Windows using WinRM
+        # Copy the WAR file to the Tomcat webapps directory on Windows using curl
         echo "Copying WAR file to Windows Tomcat server..."
-        curl -u ${TOMCAT_USER}:${TOMCAT_PASSWORD} --ntlm --upload-file $WAR_FILE "http://${TOMCAT_HOST}:${TOMCAT_PORT}/manager/text/deploy?path=/your-app-context&update=true"
+        curl -u ${TOMCAT_USER}:${TOMCAT_PASS} --ntlm --upload-file $WAR_FILE "http://${TOMCAT_HOST}:${TOMCAT_PORT}/manager/text/deploy?path=/onlinebookstore&update=true"
 
         echo "WAR file successfully deployed to Tomcat on Windows."
