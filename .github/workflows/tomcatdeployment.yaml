@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: Myrunner
+    runs-on: myrunner
 
     steps:
     - uses: actions/checkout@v3
