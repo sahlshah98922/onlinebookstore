@@ -18,9 +18,16 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-
+        
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
     - name: Run Tests
       run: mvn -B test --file pom.xml  
+
+    - name: Deploy to Tomcat
+      run: |
+        WAR_FILE=$(ls target/*.war | head -n 1)
+        curl -u "${{ secrets.TOMCAT_USER }}:${{ secrets.TOMCAT_PASS }}" \
+        --upload-file "$WAR_FILE" \
+        "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/myapp&update=true"  
