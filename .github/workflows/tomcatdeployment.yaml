@@ -33,4 +33,4 @@ jobs:
           -Method Put `
           -InFile $warFile.FullName `
           -Credential (New-Object System.Management.Automation.PSCredential("${{ secrets.TOMCAT_USER }}", (ConvertTo-SecureString "${{ secrets.TOMCAT_PASS }}" -AsPlainText -Force)))
-      shell: pwsh
+      shell: powershell
