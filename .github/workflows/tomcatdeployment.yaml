@@ -14,19 +14,15 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Verify Java version
-      run: java --version
-      shell: pwsh
+      run: java --version 
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-      shell: pwsh
 
     - name: Run Tests
       run: mvn -B test --file pom.xml
-      shell: pwsh
 
     - name: Deploy to Tomcat
-      shell: pwsh
       run: |
         $warFile = Get-ChildItem -Path target -Filter *.war | Select-Object -First 1
         Invoke-RestMethod `
