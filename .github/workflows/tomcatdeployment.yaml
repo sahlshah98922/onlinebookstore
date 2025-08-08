@@ -24,10 +24,14 @@ jobs:
 
     - name: Run Tests
       run: mvn -B test --file pom.xml  
-
+ 
     - name: Deploy to Tomcat
       run: |
-        WAR_FILE=$(ls target/*.war | head -n 1)
-        curl -u "${{ secrets.TOMCAT_USER }}:${{ secrets.TOMCAT_PASS }}" \
-        --upload-file "$WAR_FILE" \
-        "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/myapp&update=true"  
+       $warFile = Get-ChildItem -Path target -Filter *.war | Select-Object -First 1
+       Invoke-RestMethod `
+       -Uri "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/myapp&update=true" `
+       -Method Put `
+       -InFile $warFile.FullName `
+       -Credential (New-Object System.Management.Automation.PSCredential("${{ secrets.TOMCAT_USER }}", (ConvertTo-SecureString "${{ secrets.TOMCAT_PASS }}" -AsPlainText -Force)))
+       shell: pwsh
+ 
