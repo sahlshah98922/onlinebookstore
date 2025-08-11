@@ -1,0 +1,27 @@
+name: Java CI with Maven and Ansible Deploy to Windows
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build WAR with Maven
+      run: mvn -B package --file pom.xml
+
+    - name: Deploy using Ansible
+      run: |
+        ansible-playbook -i /path/to/your/inventory.ini ansible/deploy-war.yml \
+          --extra-vars "war_file=target/myapp.war app_name=myapp tomcat_service_name=Tomcat10"
