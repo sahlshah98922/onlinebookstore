@@ -6,7 +6,7 @@ on:
     
 jobs:
   build:
-    runs-on: [self-hosted, ansible-runner]
+    runs-on: [self-hosted, redhat-runner]
 
     steps:
     - uses: actions/checkout@v3
