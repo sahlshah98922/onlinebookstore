@@ -21,6 +21,6 @@ jobs:
 
     - name: Deploy using Ansible
       run: |
-       ansible-playbook -i /etc/ansible/inventory.ini /etc/ansible/deploy-war.yml --% --extra-vars "war_file=target/myapp.war app_name=mine_app tomcat_service_name=Tomcat10"
+       ansible-playbook -i /etc/ansible/inventory.ini /etc/ansible/deploy-war.yml --% --extra-vars "war_file=target/myapp.war app_name=my_app tomcat_service_name=Tomcat10"
       shell: bash
 
