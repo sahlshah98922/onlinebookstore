@@ -13,11 +13,9 @@ jobs:
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-      shell: cmd
 
     - name: Run Tests
       run: mvn -B test --file pom.xml
-      shell: cmd
 
     - name: Deploy using Ansible
       run: |
