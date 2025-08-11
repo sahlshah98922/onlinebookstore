@@ -3,7 +3,10 @@ name: Java CI with Maven and Ansible Deploy to Windows
 on:
   push:
     branches: [ "main" ]
-
+    paths:
+      - 'cicd/**'
+      - '.github/workflows/ansible_deploy.yaml'
+      
 jobs:
   build-and-deploy:
     runs-on: self-hosted
