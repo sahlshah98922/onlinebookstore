@@ -3,9 +3,7 @@ name: Java CI with Maven
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+    
 jobs:
   build:
     runs-on: self-hosted
@@ -27,5 +25,5 @@ jobs:
 
     - name: Deploy using Ansible
       run: |
-        ansible-playbook -i /path/to/your/inventory.ini ansible/deploy-war.yml \
+        ansible-playbook -i etc/ansible/inventory.ini etc/ansible/deploy-war.yml \
           --extra-vars "war_file=target/myapp.war app_name=my_app tomcat_service_name=Tomcat10"
