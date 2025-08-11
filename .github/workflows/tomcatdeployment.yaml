@@ -13,10 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Verify Java version
-      run: java --version
-      shell: cmd
-
     - name: Build with Maven
       run: mvn -B package --file pom.xml
       shell: cmd
