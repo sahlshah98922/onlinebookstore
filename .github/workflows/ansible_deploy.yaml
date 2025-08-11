@@ -2,10 +2,7 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "main" ]
-    paths:
-      - 'ansible/**'
-      - '.github/workflows/deploy.yml'  
+    branches: [ "main" ]  
     
 jobs:
   build:
