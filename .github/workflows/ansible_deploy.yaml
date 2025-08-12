@@ -18,6 +18,6 @@ jobs:
       run: mvn -B test --file pom.xml
 
     - name: Deploy WAR with Ansible
-      run: ansible-playbook -i /etc/ansible/192_168_159_130 /etc/ansible/deploy-war.yml --extra-vars "war_file=target/my_app.war app_name=my_app tomcat_service_name=Tomcat10"
+      run: ansible-playbook -i /etc/ansible/192_168_159_130 /etc/ansible/deploy-war.yml --extra-vars "war_file=target/myapp.war app_name=my_app tomcat_service_name=Tomcat10"
 
 
