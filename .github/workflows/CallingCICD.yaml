@@ -14,5 +14,6 @@ jobs:
           curl -L -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GH_TOKEN}" \
-            https://api.github.com/repos/sahlshah98922/CICD.yaml/dispatches \
+            https://api.github.com/repos/sahlshah98922/common_workflow/actions/workflows/CICD.yaml/dispatches \
             -d '{"ref":"main"}'
+
