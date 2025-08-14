@@ -5,15 +5,20 @@ on:
 
 jobs:
   run-cicd:
-    runs-on: [self-hosted, redhat-runner]   # ya ubuntu-latest / windows-latest as per environment
+    runs-on: ubuntu-latest
 
     steps:
+      
+      # Step 2: Checkout common_workflow repo jisme CICD.yaml hai
       - name: Checkout CICD repo
         uses: actions/checkout@v3
         with:
-          repository: sahlshah98922/common_workflow   # yeh tera CICD repo ka naam
-          token: ${{ secrets.GH_PAT }}                # PAT with repo read access
-          ref: main                                   # branch name
+          repository: sahlshah98922/common_workflow   # <--- repo jisme CICD.yaml hai
+          token: ${{ secrets.GH_PAT }}
+          ref: main
+          path: common_workflow  # is folder me checkout hoga
 
+      # Step 3: Run the script instead of YAML
       - name: Run CICD script
-        run: common_workflow/CICD.yaml
+        run: ./common_workflow/CICD.yaml
+
