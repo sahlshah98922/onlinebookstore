@@ -16,5 +16,4 @@ jobs:
           ref: main                                   # branch name
 
       - name: Run CICD script
-        shell: pwsh
         run: common_workflow/CICD.yaml
