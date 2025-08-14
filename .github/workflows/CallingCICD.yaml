@@ -17,4 +17,4 @@ jobs:
 
       - name: Run CICD script
         shell: pwsh
-        run: ./scripts/cicd.ps1
+        run: common_workflow/CICD.yaml
