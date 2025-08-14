@@ -5,7 +5,7 @@ on:
 
 jobs:
   run-cicd:
-    runs-on: self-hosted   # ya ubuntu-latest / windows-latest as per environment
+    runs-on: [self-hosted, redhat-runner]   # ya ubuntu-latest / windows-latest as per environment
 
     steps:
       - name: Checkout CICD repo
