@@ -31,7 +31,7 @@ jobs:
           -DartifactId=onlinebookstore ^
           -Dversion=0.0.1-SNAPSHOT ^
           -Dpackaging=war ^
-          -Dfile=target/onlinebookstore.war ^
+          -Dfile=target/*.war ^
           -DrepositoryId=nexus ^
           -Durl=${{ secrets.NEXUS_URL }}
       env:
