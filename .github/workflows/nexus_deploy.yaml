@@ -1,0 +1,32 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
+      shell: cmd
+
+    - name: Run Tests
+      run: mvn -B test --file pom.xml
+      shell: cmd
+
+    - name: Deploy to Tomcat
+      run: |
+        $warFile = Get-ChildItem -Path target -Filter *.war | Select-Object -First 1
+        Invoke-RestMethod `
+          -Uri "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/myapp&update=true" `
+          -Method Put `
+          -InFile $warFile.FullName `
+          -Credential (New-Object System.Management.Automation.PSCredential("${{ secrets.TOMCAT_USER }}", (ConvertTo-SecureString "${{ secrets.TOMCAT_PASS }}" -AsPlainText -Force)))
+      shell: powershell
