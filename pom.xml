@@ -11,8 +11,8 @@
   <!-- ✅ Nexus Repository Info -->
   <distributionManagement>
     <repository>
-      <id>nexus-releases</id>
-      <url>http://localhost:8081/repository/maven-releases/</url>
+      <id>MyNexusRepo</id>
+      <url>http://localhost:8081/repository/MyNexusRepo/</url>
     </repository>
     <snapshotRepository>
       <id>nexus-snapshots</id>
