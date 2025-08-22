@@ -27,13 +27,14 @@ jobs:
     - name: Upload WAR to Nexus
       run: |
         mvn deploy:deploy-file ^
-          -DgroupId=onlinebookstore ^
-          -DartifactId=onlinebookstore ^
-          -Dversion=0.0.1-SNAPSHOT ^
-          -Dpackaging=war ^
-          -Dfile=C:\actions-runner\_work\onlinebookstore\onlinebookstore\target\onlinebookstore-0.0.1-SNAPSHOT ^
-          -DrepositoryId=nexus ^
-          -Durl=${{ secrets.NEXUS_URL }}
+         -DgroupId=onlinebookstore ^
+         -DartifactId=onlinebookstore ^
+         -Dversion=0.0.1-SNAPSHOT ^
+         -Dpackaging=war ^
+         -Dfile=target/onlinebookstore-0.0.1-SNAPSHOT.war ^
+         -DrepositoryId=nexus ^
+         -Durl=http://192.168.10.130:8081/repository/maven-snapshots/
+
       env:
         NEXUS_USERNAME: ${{ secrets.admin }}
         NEXUS_PASSWORD: ${{ secrets.admin }}
