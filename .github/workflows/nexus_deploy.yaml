@@ -32,7 +32,7 @@ jobs:
          -Dversion=0.0.1-SNAPSHOT ^
          -Dpackaging=war ^
          -Dfile=target/onlinebookstore-0.0.1-SNAPSHOT.war ^
-         -DrepositoryId=nexus ^
+         -DrepositoryId=nexus-snapshots ^
          -Durl=http://192.168.10.130:8081/repository/maven-snapshots/
 
       env:
