@@ -41,20 +41,22 @@ jobs:
         NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
       shell: cmd
 
-    # Step 4: Download WAR from Nexus
+       # Step 4: Download WAR from Nexus
     - name: Download WAR from Nexus
+      shell: powershell
       run: |
-        $url = "http://<NEXUS_URL>/repository/maven-releases/com/example/onlinebookstore/0.0.1-SNAPSHOT/onlinebookstore-0.0.1-SNAPSHOT.war"
+        $url = "http://192.168.10.130:8081/repository/maven-snapshots/onlinebookstore/onlinebookstore/0.0.1-SNAPSHOT/onlinebookstore-0.0.1-20250822.105903-5.war"
         $output = "onlinebookstore.war"
-        Invoke-WebRequest -Uri $url -OutFile $output `
-          -Headers @{Authorization=("Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${{ secrets.NEXUS_USER }}:${{ secrets.NEXUS_PASS }}")))}
+        $base64AuthInfo = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${{ secrets.NEXUS_USER }}:${{ secrets.NEXUS_PASS }}"))
+        Invoke-WebRequest -Uri $url -OutFile $output -Headers @{Authorization=("Basic $base64AuthInfo")}
 
     # Step 5: Deploy to Tomcat
     - name: Deploy to Tomcat
+      shell: powershell
       run: |
         Invoke-RestMethod `
-          -Uri "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/myapp&update=true" `
+          -Uri "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/onlinebookstore&update=true" `
           -Method Put `
           -InFile "onlinebookstore.war" `
           -Credential (New-Object System.Management.Automation.PSCredential("${{ secrets.TOMCAT_USER }}", (ConvertTo-SecureString "${{ secrets.TOMCAT_PASS }}" -AsPlainText -Force)))
-      shell: powershell
+
