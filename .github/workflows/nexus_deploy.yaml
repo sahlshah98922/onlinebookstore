@@ -33,15 +33,15 @@ jobs:
         -Dpackaging=war ^
         -Dfile=target/onlinebookstore-0.0.1-SNAPSHOT.war ^
         -DrepositoryId=nexus-snapshots ^
-        -Durl=http://192.168.10.130:8081/repository/maven-snapshots/
+        -Durl=http://192.168.10.119:8081/repository/maven-snapshots/
 
 
       env:
-        NEXUS_USERNAME: ${{ secrets.admin }}
-        NEXUS_PASSWORD: ${{ secrets.admin }}
+        NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+        NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
       shell: cmd
 
- #   # # Step 4: Deploy to Tomcat (if needed)
+    # # Step 4: Deploy to Tomcat (if needed)
     # - name: Deploy to Tomcat
     #   run: |
     #     $warFile = Get-ChildItem -Path target -Filter *.war | Select-Object -First 1
