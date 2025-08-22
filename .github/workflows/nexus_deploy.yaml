@@ -41,13 +41,20 @@ jobs:
         NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
       shell: cmd
 
-    # # Step 4: Deploy to Tomcat (if needed)
-    # - name: Deploy to Tomcat
-    #   run: |
-    #     $warFile = Get-ChildItem -Path target -Filter *.war | Select-Object -First 1
-    #     Invoke-RestMethod `
-    #       -Uri "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/myapp&update=true" `
-    #       -Method Put `
-    #       -InFile $warFile.FullName `
-    #       -Credential (New-Object System.Management.Automation.PSCredential("${{ secrets.TOMCAT_USER }}", (ConvertTo-SecureString "${{ secrets.TOMCAT_PASS }}" -AsPlainText -Force)))
-    #   shell: powershell
+    # Step 4: Download WAR from Nexus
+    - name: Download WAR from Nexus
+      run: |
+        $url = "http://<NEXUS_URL>/repository/maven-releases/com/example/onlinebookstore/0.0.1-SNAPSHOT/onlinebookstore-0.0.1-SNAPSHOT.war"
+        $output = "onlinebookstore.war"
+        Invoke-WebRequest -Uri $url -OutFile $output `
+          -Headers @{Authorization=("Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${{ secrets.NEXUS_USER }}:${{ secrets.NEXUS_PASS }}")))}
+
+    # Step 5: Deploy to Tomcat
+    - name: Deploy to Tomcat
+      run: |
+        Invoke-RestMethod `
+          -Uri "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/myapp&update=true" `
+          -Method Put `
+          -InFile "onlinebookstore.war" `
+          -Credential (New-Object System.Management.Automation.PSCredential("${{ secrets.TOMCAT_USER }}", (ConvertTo-SecureString "${{ secrets.TOMCAT_PASS }}" -AsPlainText -Force)))
+      shell: powershell
