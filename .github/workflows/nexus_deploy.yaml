@@ -23,29 +23,29 @@ jobs:
       run: mvn -B test --file pom.xml
       shell: cmd
 
-    # Step 3: Deploy artifact (WAR) to Nexus
-    - name: Upload WAR to Nexus
-      run: |
-        mvn deploy:deploy-file ^
-          -DgroupId=onlinebookstore ^
-          -DartifactId=onlinebookstore ^
-          -Dversion=0.0.1-SNAPSHOT ^
-          -Dpackaging=war ^
-          -Dfile=target/*.war ^
-          -DrepositoryId=nexus ^
-          -Durl=${{ secrets.NEXUS_URL }}
-      env:
-        NEXUS_USERNAME: ${{ secrets.admin }}
-        NEXUS_PASSWORD: ${{ secrets.admin}}
-      shell: cmd
+    # # Step 3: Deploy artifact (WAR) to Nexus
+    # - name: Upload WAR to Nexus
+    #   run: |
+    #     mvn deploy:deploy-file ^
+    #       -DgroupId=onlinebookstore ^
+    #       -DartifactId=onlinebookstore ^
+    #       -Dversion=0.0.1-SNAPSHOT ^
+    #       -Dpackaging=war ^
+    #       -Dfile=target/*.war ^
+    #       -DrepositoryId=nexus ^
+    #       -Durl=${{ secrets.NEXUS_URL }}
+    #   env:
+    #     NEXUS_USERNAME: ${{ secrets.admin }}
+    #     NEXUS_PASSWORD: ${{ secrets.admin }}
+    #   shell: cmd
 
-    # Step 4: Deploy to Tomcat (if needed)
-    - name: Deploy to Tomcat
-      run: |
-        $warFile = Get-ChildItem -Path target -Filter *.war | Select-Object -First 1
-        Invoke-RestMethod `
-          -Uri "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/myapp&update=true" `
-          -Method Put `
-          -InFile $warFile.FullName `
-          -Credential (New-Object System.Management.Automation.PSCredential("${{ secrets.TOMCAT_USER }}", (ConvertTo-SecureString "${{ secrets.TOMCAT_PASS }}" -AsPlainText -Force)))
-      shell: powershell
+    # # Step 4: Deploy to Tomcat (if needed)
+    # - name: Deploy to Tomcat
+    #   run: |
+    #     $warFile = Get-ChildItem -Path target -Filter *.war | Select-Object -First 1
+    #     Invoke-RestMethod `
+    #       -Uri "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/myapp&update=true" `
+    #       -Method Put `
+    #       -InFile $warFile.FullName `
+    #       -Credential (New-Object System.Management.Automation.PSCredential("${{ secrets.TOMCAT_USER }}", (ConvertTo-SecureString "${{ secrets.TOMCAT_PASS }}" -AsPlainText -Force)))
+    #   shell: powershell
