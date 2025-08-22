@@ -23,21 +23,21 @@ jobs:
       run: mvn -B test --file pom.xml
       shell: cmd
 
-    # # Step 3: Deploy artifact (WAR) to Nexus
-    # - name: Upload WAR to Nexus
-    #   run: |
-    #     mvn deploy:deploy-file ^
-    #       -DgroupId=onlinebookstore ^
-    #       -DartifactId=onlinebookstore ^
-    #       -Dversion=0.0.1-SNAPSHOT ^
-    #       -Dpackaging=war ^
-    #       -Dfile=target/*.war ^
-    #       -DrepositoryId=nexus ^
-    #       -Durl=${{ secrets.NEXUS_URL }}
-    #   env:
-    #     NEXUS_USERNAME: ${{ secrets.admin }}
-    #     NEXUS_PASSWORD: ${{ secrets.admin }}
-    #   shell: cmd
+    # Step 3: Deploy artifact (WAR) to Nexus
+    - name: Upload WAR to Nexus
+      run: |
+        mvn deploy:deploy-file ^
+          -DgroupId=onlinebookstore ^
+          -DartifactId=onlinebookstore ^
+          -Dversion=0.0.1-SNAPSHOT ^
+          -Dpackaging=war ^
+          -Dfile=target/onlinebookstore-0.0.1-SNAPSHOT ^
+          -DrepositoryId=nexus ^
+          -Durl=${{ secrets.NEXUS_URL }}
+      env:
+        NEXUS_USERNAME: ${{ secrets.admin }}
+        NEXUS_PASSWORD: ${{ secrets.admin }}
+      shell: cmd
 
     # # Step 4: Deploy to Tomcat (if needed)
     # - name: Deploy to Tomcat
