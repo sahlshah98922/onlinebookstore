@@ -1,0 +1,16 @@
+name: Jira Connection Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call Jira
+        run: |
+          curl -X GET \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}' | base64)" \
+            -H "Accept: application/json" \
+            ${{ secrets.JIRA_URL }}/rest/api/2/myself
