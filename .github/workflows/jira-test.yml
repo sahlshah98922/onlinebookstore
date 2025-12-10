@@ -11,54 +11,60 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v4
+      # Step 1: Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      # Step 2: Get last commit message
       - name: Get commit message
         id: getmsg
         run: |
           echo "msg=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
 
+      # Step 3: Extract Jira Issue Key
       - name: Extract Jira Issue
         id: extract
         run: |
           commit="${{ steps.getmsg.outputs.msg }}"
           echo "Commit = $commit"
-
           jira=$(echo "$commit" | grep -oE 'KAN-[0-9]+')
-
           if [ -z "$jira" ]; then
             echo "❌ Jira issue missing!"
             exit 1
           fi
-
           echo "jira=$jira" >> $GITHUB_OUTPUT
 
+      # Step 4: Move Issue to In Progress
       - name: Move to In Progress
         run: |
-          curl -X POST \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}' | base64)" \
+          curl -v -X POST \
+            -H "Authorization: Basic $(echo -n "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}" | base64)" \
             -H "Content-Type: application/json" \
             -d '{"transition":{"id":"11"}}' \
             "${{ secrets.JIRA_URL }}/rest/api/3/issue/${{ steps.extract.outputs.jira }}/transitions"
 
+      # Step 5: Build step (placeholder)
       - name: Build
-        run: echo "building..."
+        run: echo "Building..."
 
+      # Step 6: Test step (placeholder)
       - name: Tests
-        run: echo "testing..."
+        run: echo "Running tests..."
 
+      # Step 7: Add Jira Comment
       - name: Jira Comment
         run: |
-          curl -X POST \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}' | base64)" \
+          curl -v -X POST \
+            -H "Authorization: Basic $(echo -n "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}" | base64)" \
             -H "Content-Type: application/json" \
             -d "{\"body\": \"Build Success on GitHub Actions\"}" \
             "${{ secrets.JIRA_URL }}/rest/api/3/issue/${{ steps.extract.outputs.jira }}/comment"
 
+      # Step 8: Move Issue to Done
       - name: Move Issue to Done
         run: |
-          curl -X POST \
-            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}' | base64)" \
+          curl -v -X POST \
+            -H "Authorization: Basic $(echo -n "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}" | base64)" \
             -H "Content-Type: application/json" \
             -d '{"transition":{"id":"31"}}' \
             "${{ secrets.JIRA_URL }}/rest/api/3/issue/${{ steps.extract.outputs.jira }}/transitions"
