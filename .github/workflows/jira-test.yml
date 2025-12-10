@@ -1,16 +1,95 @@
-name: Jira Connection Test
+name: CI with Jira validation
 
 on:
+  push:
+    branches:
+      - main
+      - develop
   workflow_dispatch:
 
 jobs:
-  test:
+  jira-ci:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Call Jira
+
+      # Checkout code
+      - uses: actions/checkout@v4
+
+
+      # Extract commit message
+      - name: Get Commit Message
+        id: commit
         run: |
-          curl -X GET \
+          echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+
+
+      # Validate Commit MUST contain Jira-ID format ABC-123
+      - name: Validate Jira ID in commit
+        id: extract
+        run: |
+          commit="${{ steps.commit.outputs.message }}"
+          echo "Commit Message: $commit"
+          jira_id=$(echo "$commit" | grep -oE '[A-Z]+-[0-9]+')
+
+          if [ -z "$jira_id" ]; then
+            echo "❌ Jira ID missing in commit message!"
+            exit 1
+          fi
+
+          echo "jira_id=$jira_id" >> $GITHUB_OUTPUT
+
+
+      # Jira Status = In Progress
+      - name: Update JIRA status - In Progress
+        run: |
+          jira="${{ steps.extract.outputs.jira_id }}"
+
+          curl -X POST \
             -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}' | base64)" \
-            -H "Accept: application/json" \
-            ${{ secrets.JIRA_URL }}/rest/api/2/myself
+            -H "Content-Type: application/json" \
+            -d '{"transition": {"id": "11"}}' \
+            "${{ secrets.JIRA_URL }}/rest/api/3/issue/$jira/transitions"
+
+      # ##########
+      # BUILD STAGE
+      # ##########
+      - name: Build
+        run: |
+          echo "Running build..."
+          sleep 5
+
+
+      # ##########
+      # TEST STAGE
+      # ##########
+      - name: Test Stage
+        run: |
+          echo "Running tests..."
+          sleep 5
+
+
+      # Jira comment + Build success
+      - name: Jira Comment Build Success
+        run: |
+          jira="${{ steps.extract.outputs.jira_id }}"
+
+          curl -X POST \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}' | base64)" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"body\": \"CI Build Passed ✔️\nRepo: ${GITHUB_REPOSITORY}\nBuild: ${GITHUB_RUN_NUMBER}\nCommit: ${GITHUB_SHA}\" }" \
+            "${{ secrets.JIRA_URL }}/rest/api/3/issue/$jira/comment"
+
+
+      # Jira Status → DONE (you can later change per environment)
+      - name: Update Jira Status Done
+        run: |
+          jira="${{ steps.extract.outputs.jira_id }}"
+
+          curl -X POST \
+            -H "Authorization: Basic $(echo -n '${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}' | base64)" \
+            -H "Content-Type: application/json" \
+            -d '{"transition": {"id": "31"}}' \
+            "${{ secrets.JIRA_URL }}/rest/api/3/issue/$jira/transitions"
+
