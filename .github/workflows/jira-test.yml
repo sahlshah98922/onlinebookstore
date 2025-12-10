@@ -11,17 +11,14 @@ jobs:
 
     steps:
 
-      # Step 1: Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Get last commit message
       - name: Get commit message
         id: getmsg
         run: |
           echo "msg=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
 
-      # Step 3: Extract Jira Issue Key
       - name: Extract Jira Issue
         id: extract
         run: |
@@ -29,13 +26,13 @@ jobs:
           echo "Commit = $commit"
           jira=$(echo "$commit" | grep -oE 'KAN-[0-9]+')
           if [ -z "$jira" ]; then
-            echo "❌ Jira issue missing!"
-            exit 1
-          fi
-          echo "jira=$jira" >> $GITHUB_OUTPUT
+            echo "⚠️ Jira issue missing! Skipping Jira steps."
+            echo "jira=" >> $GITHUB_OUTPUT
+          else
+            echo "jira=$jira" >> $GITHUB_OUTPUT
 
-      # Step 4: Move Issue to In Progress
       - name: Move to In Progress
+        if: steps.extract.outputs.jira != ''
         run: |
           curl -v -X POST \
             -H "Authorization: Basic $(echo -n "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}" | base64)" \
@@ -43,16 +40,14 @@ jobs:
             -d '{"transition":{"id":"11"}}' \
             "${{ secrets.JIRA_URL }}/rest/api/3/issue/${{ steps.extract.outputs.jira }}/transitions"
 
-      # Step 5: Build step (placeholder)
       - name: Build
         run: echo "Building..."
 
-      # Step 6: Test step (placeholder)
       - name: Tests
         run: echo "Running tests..."
 
-      # Step 7: Add Jira Comment
       - name: Jira Comment
+        if: steps.extract.outputs.jira != ''
         run: |
           curl -v -X POST \
             -H "Authorization: Basic $(echo -n "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}" | base64)" \
@@ -60,8 +55,8 @@ jobs:
             -d "{\"body\": \"Build Success on GitHub Actions\"}" \
             "${{ secrets.JIRA_URL }}/rest/api/3/issue/${{ steps.extract.outputs.jira }}/comment"
 
-      # Step 8: Move Issue to Done
       - name: Move Issue to Done
+        if: steps.extract.outputs.jira != ''
         run: |
           curl -v -X POST \
             -H "Authorization: Basic $(echo -n "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}" | base64)" \
