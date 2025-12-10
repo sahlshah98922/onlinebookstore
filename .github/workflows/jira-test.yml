@@ -1,4 +1,4 @@
-name: CI + Jira Integration
+name: Jira Integration
 
 on:
   push:
