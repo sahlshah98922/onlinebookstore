@@ -20,50 +20,82 @@ jobs:
       # Step 1: Checkout code
       - uses: actions/checkout@v4
 
-      # Step 2: Get last commit message
-      - name: Get Commit Message
-        id: commit
+      # Step 2: Determine Jira ticket
+      - name: Determine Jira Ticket
+        id: jira_ticket
         run: |
-          commit="$(git log -1 --pretty=%B)"
-          echo "Commit Message:"
-          echo "$commit"
-
-          # Extract Jira ticket ID (KAN-123)
-          jira=$(echo "$commit" | grep -oE 'KAN-[0-9]+') || true
-
-          if [ -z "$jira" ]; then
-            echo "⚠️ No Jira ticket found."
-            echo "jira=" >> $GITHUB_OUTPUT
+          # Check for manually provided ticket first (workflow_dispatch)
+          if [ -n "${{ github.event.inputs.JIRA_ISSUE }}" ] && [ "${{ github.event.inputs.JIRA_ISSUE }}" != "KAN-1" ]; then
+            echo "Using manually provided Jira ticket: ${{ github.event.inputs.JIRA_ISSUE }}"
+            echo "jira=${{ github.event.inputs.JIRA_ISSUE }}" >> $GITHUB_OUTPUT
           else
-            echo "Jira Ticket: $jira"
-            echo "jira=$jira" >> $GITHUB_OUTPUT
+            # Extract from commit message
+            commit="$(git log -1 --pretty=%B)"
+            echo "Commit Message:"
+            echo "$commit"
+
+            # Extract Jira ticket ID (KAN-123)
+            jira=$(echo "$commit" | grep -oE 'KAN-[0-9]+') || true
+
+            if [ -z "$jira" ]; then
+              echo "⚠️ No Jira ticket found."
+              echo "jira=" >> $GITHUB_OUTPUT
+            else
+              echo "Jira Ticket from commit: $jira"
+              echo "jira=$jira" >> $GITHUB_OUTPUT
+            fi
           fi
 
       # Step 3: Stop if no Jira ticket
       - name: Skip if no ticket
-        if: ${{ steps.commit.outputs.jira == '' }}
+        if: ${{ steps.jira_ticket.outputs.jira == '' }}
         run: echo "No Jira ticket found. Skipping Jira update steps."
 
       # Step 4: Add comment in Jira
       - name: Add Jira Comment
-        if: ${{ steps.commit.outputs.jira != '' }}
+        if: ${{ steps.jira_ticket.outputs.jira != '' }}
         run: |
           curl --request POST \
-            --url "https://sahil-shah.atlassian.net/rest/api/3/issue/${{ steps.commit.outputs.jira }}/comment" \
+            --url "https://sahil-shah.atlassian.net/rest/api/3/issue/${{ steps.jira_ticket.outputs.jira }}/comment" \
             --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
             --data "{
-              \"body\": \"GitHub: Commit pushed to branch '${GITHUB_REF##*/}'\"
+              \"body\": {
+                \"type\": \"doc\",
+                \"version\": 1,
+                \"content\": [{
+                  \"type\": \"paragraph\",
+                  \"content\": [{
+                    \"type\": \"text\",
+                    \"text\": \"GitHub: Commit pushed to branch '${{ github.ref_name }}'. Build URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                  }]
+                }]
+              }
             }"
 
-      # Step 5: Transition Jira Issue
+      # Step 5: Transition Jira Issue to In Progress
       - name: Move Jira Ticket to In Progress
-        if: ${{ steps.commit.outputs.jira != '' }}
+        if: ${{ steps.jira_ticket.outputs.jira != '' }}
         run: |
+          # First, get available transitions to find the correct transition ID
+          echo "Getting available transitions for ${{ steps.jira_ticket.outputs.jira }}"
+          
+          # You need to find the correct transition ID for "In Progress"
+          # Common transition IDs: 
+          # - "Start Progress" or "In Progress" typically has ID 21, 31, or similar
+          # You can check by running: curl -u "email:token" "https://sahil-shah.atlassian.net/rest/api/3/issue/KAN-1/transitions"
+          
+          TRANSITION_ID="21"  # Change this to your actual transition ID
+          
           curl --request POST \
-            --url "https://sahil-shah.atlassian.net/rest/api/3/issue/${{ steps.commit.outputs.jira }}/transitions" \
+            --url "https://sahil-shah.atlassian.net/rest/api/3/issue/${{ steps.jira_ticket.outputs.jira }}/transitions" \
             --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
             --data "{
-              \"transition\": { \"id\": \"31\" }
+              \"transition\": {
+                \"id\": \"$TRANSITION_ID\"
+              }
             }"
+          echo "Transition attempted for issue ${{ steps.jira_ticket.outputs.jira }}"
