@@ -1,69 +1,61 @@
-name: Jira Integration
+name: CI with Jira Integration
 
 on:
   push:
-    branches: [ main, develop ]
+    branches:
+      - main
+      - develop
   workflow_dispatch:
 
 jobs:
-  build:
+  jira-ci:
     runs-on: ubuntu-latest
 
     steps:
 
-      - name: Checkout code
-        uses: actions/checkout@v4
+      # Step 1: Checkout code
+      - uses: actions/checkout@v4
 
-      - name: Get commit message
-        id: getmsg
+      # Step 2: Extract commit message safely
+      - name: Get Commit Message
+        id: commit
         run: |
-          echo "msg<<EOF" >> $GITHUB_OUTPUT
-          git log -1 --pretty=%B >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          commit="$(git log -1 --pretty=%B)"
+          echo "Commit Message:"
+          echo "$commit"
 
-      - name: Extract Jira Issue
-        id: extract
-        run: |
-          commit="${{ steps.getmsg.outputs.msg }}"
-          echo "Commit = $commit"
-          jira=$(echo "$commit" | grep -oE 'KAN-[0-9]+')
+          # Extract JIRA Ticket ID from commit (format: KAN-123)
+          jira=$(echo "$commit" | grep -oE 'KAN-[0-9]+') || true
 
           if [ -z "$jira" ]; then
-            echo "⚠️ Jira issue missing! Skipping Jira steps."
+            echo "⚠️ No Jira ticket found."
             echo "jira=" >> $GITHUB_OUTPUT
           else
+            echo "Found Jira ticket: $jira"
             echo "jira=$jira" >> $GITHUB_OUTPUT
           fi
 
-      - name: Move to In Progress
-        if: steps.extract.outputs.jira != ''
+      # Step 3: Skip Jira steps if no ticket
+      - name: Stop if no Jira ticket
+        if: ${{ steps.commit.outputs.jira == '' }}
+        run: echo "No Jira ticket found. Skipping Jira update steps."
+
+      # Step 4: Add comment to Jira issue
+      - name: Add comment to Jira Issue
+        if: ${{ steps.commit.outputs.jira != '' }}
         run: |
-          curl -v -X POST \
-            -H "Authorization: Basic $(echo -n "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}" | base64)" \
+          curl -X POST \
+            -H "Authorization: Basic ${{ secrets.JIRA_AUTH }}" \
             -H "Content-Type: application/json" \
-            -d '{"transition":{"id":"11"}}' \
-            "${{ secrets.JIRA_URL }}/rest/api/3/issue/${{ steps.extract.outputs.jira }}/transitions"
+            --data "{\"body\": \"Commit pushed in GitHub: $GITHUB_SHA\"}" \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${{ steps.commit.outputs.jira }}/comment"
 
-      - name: Build
-        run: echo "Building..."
-
-      - name: Tests
-        run: echo "Running tests..."
-
-      - name: Jira Comment
-        if: steps.extract.outputs.jira != ''
+      # Step 5: Transition Jira Issue (optional)
+      - name: Move Jira Issue to In Progress
+        if: ${{ steps.commit.outputs.jira != '' }}
         run: |
-          curl -v -X POST \
-            -H "Authorization: Basic $(echo -n "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}" | base64)" \
+          curl -X POST \
+            -H "Authorization: Basic ${{ secrets.JIRA_AUTH }}" \
             -H "Content-Type: application/json" \
-            -d "{\"body\": \"Build Success on GitHub Actions\"}" \
-            "${{ secrets.JIRA_URL }}/rest/api/3/issue/${{ steps.extract.outputs.jira }}/comment"
-
-      - name: Move Issue to Done
-        if: steps.extract.outputs.jira != ''
-        run: |
-          curl -v -X POST \
-            -H "Authorization: Basic $(echo -n "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_TOKEN }}" | base64)" \
-            -H "Content-Type: application/json" \
-            -d '{"transition":{"id":"31"}}' \
-            "${{ secrets.JIRA_URL }}/rest/api/3/issue/${{ steps.extract.outputs.jira }}/transitions"
+            --data '{ "transition": { "id": "21" } }' \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${{ steps.commit.outputs.jira }}/transitions"
