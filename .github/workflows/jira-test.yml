@@ -45,7 +45,7 @@ jobs:
         if: ${{ steps.commit.outputs.jira != '' }}
         run: |
           curl --request POST \
-            --url "https://your-domain.atlassian.net/rest/api/3/issue/${{ steps.commit.outputs.jira }}/comment" \
+            --url "https://sahil-shah.atlassian.net/rest/api/3/issue/${{ steps.commit.outputs.jira }}/comment" \
             --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
             --header 'Content-Type: application/json' \
             --data "{
@@ -57,7 +57,7 @@ jobs:
         if: ${{ steps.commit.outputs.jira != '' }}
         run: |
           curl --request POST \
-            --url "https://your-domain.atlassian.net/rest/api/3/issue/${{ steps.commit.outputs.jira }}/transitions" \
+            --url "https://sahil-shah.atlassian.net/rest/api/3/issue/${{ steps.commit.outputs.jira }}/transitions" \
             --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
             --header 'Content-Type: application/json' \
             --data "{
