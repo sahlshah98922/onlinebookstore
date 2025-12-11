@@ -17,7 +17,9 @@ jobs:
       - name: Get commit message
         id: getmsg
         run: |
-          echo "msg=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+          echo "msg<<EOF" >> $GITHUB_OUTPUT
+          git log -1 --pretty=%B >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Extract Jira Issue
         id: extract
@@ -25,11 +27,13 @@ jobs:
           commit="${{ steps.getmsg.outputs.msg }}"
           echo "Commit = $commit"
           jira=$(echo "$commit" | grep -oE 'KAN-[0-9]+')
+
           if [ -z "$jira" ]; then
             echo "⚠️ Jira issue missing! Skipping Jira steps."
             echo "jira=" >> $GITHUB_OUTPUT
           else
             echo "jira=$jira" >> $GITHUB_OUTPUT
+          fi
 
       - name: Move to In Progress
         if: steps.extract.outputs.jira != ''
