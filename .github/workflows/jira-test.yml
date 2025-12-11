@@ -3,9 +3,13 @@ name: CI with Jira Integration
 on:
   push:
     branches:
-      - main
-      - develop
+      - '*'   # triggers on all branches
   workflow_dispatch:
+    inputs:
+      JIRA_ISSUE:
+        description: 'Jira Ticket ID (e.g., KAN-1)'
+        required: false
+        default: 'KAN-1'
 
 jobs:
   jira-ci:
