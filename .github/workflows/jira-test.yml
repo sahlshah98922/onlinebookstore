@@ -16,7 +16,7 @@ jobs:
       # Step 1: Checkout code
       - uses: actions/checkout@v4
 
-      # Step 2: Extract commit message safely
+      # Step 2: Get last commit message
       - name: Get Commit Message
         id: commit
         run: |
@@ -24,38 +24,42 @@ jobs:
           echo "Commit Message:"
           echo "$commit"
 
-          # Extract JIRA Ticket ID from commit (format: KAN-123)
+          # Extract Jira ticket ID (KAN-123)
           jira=$(echo "$commit" | grep -oE 'KAN-[0-9]+') || true
 
           if [ -z "$jira" ]; then
             echo "⚠️ No Jira ticket found."
             echo "jira=" >> $GITHUB_OUTPUT
           else
-            echo "Found Jira ticket: $jira"
+            echo "Jira Ticket: $jira"
             echo "jira=$jira" >> $GITHUB_OUTPUT
           fi
 
-      # Step 3: Skip Jira steps if no ticket
-      - name: Stop if no Jira ticket
+      # Step 3: Stop if no Jira ticket
+      - name: Skip if no ticket
         if: ${{ steps.commit.outputs.jira == '' }}
         run: echo "No Jira ticket found. Skipping Jira update steps."
 
-      # Step 4: Add comment to Jira issue
-      - name: Add comment to Jira Issue
+      # Step 4: Add comment in Jira
+      - name: Add Jira Comment
         if: ${{ steps.commit.outputs.jira != '' }}
         run: |
-          curl -X POST \
-            -H "Authorization: Basic ${{ secrets.JIRA_AUTH }}" \
-            -H "Content-Type: application/json" \
-            --data "{\"body\": \"Commit pushed in GitHub: $GITHUB_SHA\"}" \
-            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${{ steps.commit.outputs.jira }}/comment"
+          curl --request POST \
+            --url "https://your-domain.atlassian.net/rest/api/3/issue/${{ steps.commit.outputs.jira }}/comment" \
+            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header 'Content-Type: application/json' \
+            --data "{
+              \"body\": \"GitHub: Commit pushed to branch '${GITHUB_REF##*/}'\"
+            }"
 
-      # Step 5: Transition Jira Issue (optional)
-      - name: Move Jira Issue to In Progress
+      # Step 5: Transition Jira Issue
+      - name: Move Jira Ticket to In Progress
         if: ${{ steps.commit.outputs.jira != '' }}
         run: |
-          curl -X POST \
-            -H "Authorization: Basic ${{ secrets.JIRA_AUTH }}" \
-            -H "Content-Type: application/json" \
-            --data '{ "transition": { "id": "21" } }' \
-            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${{ steps.commit.outputs.jira }}/transitions"
+          curl --request POST \
+            --url "https://your-domain.atlassian.net/rest/api/3/issue/${{ steps.commit.outputs.jira }}/transitions" \
+            --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header 'Content-Type: application/json' \
+            --data "{
+              \"transition\": { \"id\": \"31\" }
+            }"
