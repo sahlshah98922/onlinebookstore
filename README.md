@@ -51,7 +51,7 @@
 Note:- This is a Sample Project, So we have used only Generic Servlet and not taken care for Security.
 
 ### =============== Dummy Database Initialization =====================
-#
+###
 STEP 1: Open MySQL Command Prompt or MySQL Workbench
 
 STEP 2: Login to the administrator user as : ```mysql -u <username> -p``` (Enter Password if asked)
