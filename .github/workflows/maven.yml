@@ -1,0 +1,97 @@
+name: Parameterized CI Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Select Environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - uat
+          - prod
+
+env:
+  IMAGE_NAME: onlinebookstore
+  JFROG_REPO: docker-local
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # ---------------- CLONE ----------------
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # ---------------- JAVA ----------------
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 11
+
+    # ---------------- BUILD ----------------
+    - name: Maven Build
+      run: |
+        mvn clean package | tee build.log
+
+    # ---------------- SONAR ----------------
+    - name: Sonar Scan
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        mvn sonar:sonar \
+        -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }} \
+        -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+        -Dsonar.login=$SONAR_TOKEN | tee sonar.log
+
+    # ---------------- QUALITY GATE ----------------
+    - name: Sonar Quality Gate
+      uses: sonarsource/sonarqube-quality-gate-action@v1
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      timeout-minutes: 2
+
+    # ---------------- DOCKER BUILD ----------------
+    - name: Docker Build
+      run: |
+        docker build -t $IMAGE_NAME:${{ inputs.env }}-${{ github.run_number }} . | tee docker.log
+
+    # ---------------- TRIVY ----------------
+    # - name: Trivy Scan
+    #   uses: aquasecurity/trivy-action@master
+    #   with:
+    #     image-ref: ${{ env.IMAGE_NAME }}:${{ inputs.env }}-${{ github.run_number }}
+    #     exit-code: 0
+
+    # # ---------------- JFROG LOGIN ----------------
+    # - name: Login to JFrog
+    #   run: |
+    #     echo "${{ secrets.JFROG_PASSWORD }}" | docker login \
+    #     ${{ secrets.JFROG_URL }} \
+    #     -u "${{ secrets.JFROG_USERNAME }}" \
+    #     --password-stdin
+
+    # # ---------------- PUSH IMAGE ----------------
+    # - name: Push Image to JFrog
+    #   run: |
+    #     docker tag $IMAGE_NAME:${{ inputs.env }}-${{ github.run_number }} \
+    #     ${{ secrets.JFROG_URL }}/${{ env.JFROG_REPO }}/$IMAGE_NAME:${{ inputs.env }}-${{ github.run_number }}
+
+    #     docker push \
+    #     ${{ secrets.JFROG_URL }}/${{ env.JFROG_REPO }}/$IMAGE_NAME:${{ inputs.env }}-${{ github.run_number }} \
+    #     | tee jfrog.log
+
+    # # ---------------- LOGS ----------------
+    # - name: Upload Logs
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: ci-logs
+    #     path: |
+    #       build.log
+    #       sonar.log
+    #       docker.log
+    #       jfrog.log
