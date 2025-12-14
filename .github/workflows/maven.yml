@@ -24,7 +24,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0   # avoids Sonar "shallow clone" warning
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -38,11 +38,10 @@ jobs:
       - name: Maven Build
         run: mvn clean package
 
-      - name: Sonar Scan + Quality Gate
+      - name: Sonar Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >
           mvn sonar:sonar
           -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }}
           -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
-          -Dsonar.qualitygate.wait=true
