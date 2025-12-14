@@ -18,32 +18,37 @@ env:
 
 jobs:
   ci:
-    runs-on: self-hosted   # 🔥 THIS IS THE FIX
+    runs-on: self-hosted
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # avoids Sonar "shallow clone" warning
 
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: 11
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
 
-    - name: Maven Build
-      run: mvn clean package
+      - name: Verify Maven
+        run: mvn -version
 
-    - name: Sonar Scan
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: |
-        mvn sonar:sonar \
-        -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }} \
-        -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-        -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+      - name: Maven Build
+        run: mvn clean package
 
-    - name: Sonar Quality Gate
-      uses: sonarsource/sonarqube-quality-gate-action@v1
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      timeout-minutes: 2
+      - name: Sonar Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          mvn sonar:sonar
+          -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }}
+          -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+      - name: Sonar Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@v1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        timeout-minutes: 2
