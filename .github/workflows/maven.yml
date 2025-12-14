@@ -45,7 +45,6 @@ jobs:
           mvn sonar:sonar
           -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }}
           -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
       - name: Sonar Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@v1
