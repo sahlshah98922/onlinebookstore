@@ -66,28 +66,15 @@ jobs:
       # ----------------------------
       # Trivy Scan + HTML Report
       # ----------------------------
-      - name: Trivy Scan (Image + Report)
-        env:
-         IMAGE_NAME: ${{ env.IMAGE_NAME }}
-         IMAGE_TAG: ${{ github.sha }}
+      - name: Trivy Scan (Image + HTML Report)
         run: |
-         export PATH=$PATH:/root/bin   
-         trivy image \
-           --severity HIGH,CRITICAL \
-           --format html \
-           --output trivy-report.html \
-           $IMAGE_NAME:$IMAGE_TAG
-
-
-      # #using docker 
-      # - name: Trivy Scan (Image + Report)
-      #   run: |
-      #     trivy image \
-      #       --server http://192.168.180.135:4954 \
-      #       --severity HIGH,CRITICAL \
-      #       --format html \
-      #       --output trivy-report.html \
-      #       $IMAGE_NAME:$IMAGE_TAG
+          export PATH=$PATH:/root/bin:/usr/local/bin
+          trivy image \
+            --severity HIGH,CRITICAL \
+            --format template \
+            --template "@contrib/html.tpl" \
+            --output trivy-report.html \
+            $IMAGE_NAME:$IMAGE_TAG
 
       # ----------------------------
       # Upload Trivy Report
