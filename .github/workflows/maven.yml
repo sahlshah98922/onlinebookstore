@@ -17,6 +17,9 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
+  # ============================
+  # CI JOB
+  # ============================
   ci:
     runs-on: self-hosted
 
@@ -94,23 +97,21 @@ jobs:
           docker tag $IMAGE_NAME:${{ inputs.env }} ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ inputs.env }}
           docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ inputs.env }}
 
-  # ----------------------------
-  # MANUAL APPROVAL STAGE
-  # ----------------------------
+  # ============================
+  # MANUAL APPROVAL (PAUSE HERE)
+  # ============================
   approval:
     needs: ci
-    runs-on: self-hosted
-    environment: manual-approval
-    steps:
-      - name: Waiting for approval
-        run: echo "Waiting for manual approval before deployment..."
+    runs-on: ubuntu-latest
+    environment:
+      name: manual-approval
 
-  # ----------------------------
-  # MOCK DEPLOYMENT (OPTIONAL)
-  # ----------------------------
+  # ============================
+  # DEPLOY (RESUMES AFTER APPROVAL)
+  # ============================
   deploy:
     needs: approval
     runs-on: self-hosted
     steps:
       - name: Mock Deployment
-        run: echo "Deployment would happen here"
+        run: echo "Deployment started after manual approval"
