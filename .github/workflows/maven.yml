@@ -26,8 +26,6 @@ jobs:
       # ----------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       # ----------------------------
       # Java + Maven Build
@@ -64,11 +62,11 @@ jobs:
             .
 
       # ----------------------------
-      # Trivy Scan + HTML Report
+      # Trivy Scan
       # ----------------------------
-      - name: Trivy Scan (Image + HTML Report)
+      - name: Trivy Scan
         run: |
-          export PATH=$PATH:/root/bin:/usr/local/bin
+          export PATH=$PATH:/usr/local/bin:/root/bin
           trivy image \
             --severity HIGH,CRITICAL \
             --format template \
@@ -76,9 +74,6 @@ jobs:
             --output trivy-report.html \
             $IMAGE_NAME:$IMAGE_TAG
 
-      # ----------------------------
-      # Upload Trivy Report
-      # ----------------------------
       - name: Upload Trivy Report
         uses: actions/upload-artifact@v4
         with:
@@ -86,7 +81,7 @@ jobs:
           path: trivy-report.html
 
       # ----------------------------
-      # Docker Push to DockerHub
+      # Docker Push
       # ----------------------------
       - name: Login to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -95,5 +90,27 @@ jobs:
         run: |
           docker tag $IMAGE_NAME:$IMAGE_TAG ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
           docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+
           docker tag $IMAGE_NAME:${{ inputs.env }} ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ inputs.env }}
           docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ inputs.env }}
+
+  # ----------------------------
+  # MANUAL APPROVAL STAGE
+  # ----------------------------
+  approval:
+    needs: ci
+    runs-on: self-hosted
+    environment: manual-approval
+    steps:
+      - name: Waiting for approval
+        run: echo "Waiting for manual approval before deployment..."
+
+  # ----------------------------
+  # MOCK DEPLOYMENT (OPTIONAL)
+  # ----------------------------
+  deploy:
+    needs: approval
+    runs-on: self-hosted
+    steps:
+      - name: Mock Deployment
+        run: echo "Deployment would happen here"
