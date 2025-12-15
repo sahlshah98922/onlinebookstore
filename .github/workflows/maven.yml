@@ -24,15 +24,9 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      # ----------------------------
-      # Checkout
-      # ----------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # ----------------------------
-      # Java + Maven Build
-      # ----------------------------
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -42,9 +36,6 @@ jobs:
       - name: Maven Build
         run: mvn clean package -DskipTests
 
-      # ----------------------------
-      # SonarQube Scan
-      # ----------------------------
       - name: Sonar Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -54,9 +45,6 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-      # ----------------------------
-      # Docker Build
-      # ----------------------------
       - name: Docker Build
         run: |
           docker build --no-cache \
@@ -64,9 +52,6 @@ jobs:
             -t $IMAGE_NAME:${{ inputs.env }} \
             .
 
-      # ----------------------------
-      # Trivy Scan
-      # ----------------------------
       - name: Trivy Scan
         run: |
           export PATH=$PATH:/usr/local/bin:/root/bin
@@ -83,9 +68,6 @@ jobs:
           name: trivy-security-report
           path: trivy-report.html
 
-      # ----------------------------
-      # Docker Push
-      # ----------------------------
       - name: Login to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
