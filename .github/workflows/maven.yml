@@ -91,7 +91,7 @@ jobs:
 
       # ----------------------------
       # Upload Trivy Report
-      # ---------------------------
+      # ----------------------------
       - name: Upload Trivy Report
         uses: actions/upload-artifact@v4
         with:
