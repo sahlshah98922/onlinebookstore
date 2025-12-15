@@ -66,10 +66,24 @@ jobs:
       # ----------------------------
       # Trivy Scan + HTML Report
       # ----------------------------
+      # - name: Trivy Scan (Image + Report)
+      #   env:
+      #    IMAGE_NAME: ${{ env.IMAGE_NAME }}
+      #    IMAGE_TAG: ${{ github.sha }}
+      #   run: |
+      #    export PATH=$PATH:/root/bin   
+      #    trivy image \
+      #      --severity HIGH,CRITICAL \
+      #      --format html \
+      #      --output trivy-report.html \
+      #      $IMAGE_NAME:$IMAGE_TAG
+
+
+      
       - name: Trivy Scan (Image + Report)
         run: |
           trivy image \
-            --server http://localhost:4954 \
+            --server http://192.168.180.135:4954 \
             --severity HIGH,CRITICAL \
             --format html \
             --output trivy-report.html \
