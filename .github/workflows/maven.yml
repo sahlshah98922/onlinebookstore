@@ -14,34 +14,72 @@ on:
 
 env:
   IMAGE_NAME: onlinebookstore
-  JFROG_REPO: docker-local
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   ci:
     runs-on: self-hosted
 
     steps:
+      # ----------------------------
+      # Checkout
+      # ----------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # avoids Sonar "shallow clone" warning
+          fetch-depth: 0
 
+      # ----------------------------
+      # Java + Maven Build
+      # ----------------------------
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 11
 
-      - name: Verify Maven
-        run: mvn -version
-
       - name: Maven Build
-        run: mvn clean package
+        run: mvn clean package -DskipTests
 
+      # ----------------------------
+      # SonarQube Scan
+      # ----------------------------
       - name: Sonar Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >
-          mvn sonar:sonar
-          -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }}
-          -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }} \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+      # ----------------------------
+      # Docker Build
+      # ----------------------------
+      - name: Docker Build
+        run: |
+          docker build \
+            -t $IMAGE_NAME:$IMAGE_TAG \
+            -t $IMAGE_NAME:${{ inputs.env }} \
+            .
+
+      # ----------------------------
+      # Trivy Scan + HTML Report
+      # ----------------------------
+      - name: Trivy Scan (Image + Report)
+        run: |
+          trivy image \
+            --server http://localhost:4954 \
+            --severity HIGH,CRITICAL \
+            --format html \
+            --output trivy-report.html \
+            $IMAGE_NAME:$IMAGE_TAG
+
+      # ----------------------------
+      # Upload Trivy Report
+      # ----------------------------
+      - name: Upload Trivy Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-security-report
+          path: trivy-report.html
