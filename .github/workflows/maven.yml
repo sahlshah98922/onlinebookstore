@@ -56,7 +56,7 @@ jobs:
       # ----------------------------
       # Docker Build
       # ----------------------------
-      - name: Docker Buildd
+      - name: Docker Build
         run: |
           docker build --no-cache \
             -t $IMAGE_NAME:$IMAGE_TAG \
