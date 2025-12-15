@@ -68,13 +68,13 @@ jobs:
       # ----------------------------
       - name: Trivy Scan (Image + HTML Report)
         run: |
-         export PATH=$PATH:/root/bin:/usr/local/bin
-         trivy image \
-         --severity HIGH,CRITICAL \
-         --format template \
-         --template ./html.tpl \
-         --output trivy-report.html \
-         $IMAGE_NAME:$IMAGE_TAG
+          export PATH=$PATH:/root/bin:/usr/local/bin
+          trivy image \
+            --severity HIGH,CRITICAL \
+            --format template \
+            --template ./html.tpl \
+            --output trivy-report.html \
+            $IMAGE_NAME:$IMAGE_TAG
 
       # ----------------------------
       # Upload Trivy Report
@@ -84,3 +84,16 @@ jobs:
         with:
           name: trivy-security-report
           path: trivy-report.html
+
+      # ----------------------------
+      # Docker Push to DockerHub
+      # ----------------------------
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Push Docker Image
+        run: |
+          docker tag $IMAGE_NAME:$IMAGE_TAG ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+          docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+          docker tag $IMAGE_NAME:${{ inputs.env }} ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ inputs.env }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ inputs.env }}
