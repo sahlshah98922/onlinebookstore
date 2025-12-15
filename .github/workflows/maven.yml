@@ -68,13 +68,13 @@ jobs:
       # ----------------------------
       - name: Trivy Scan (Image + HTML Report)
         run: |
-          export PATH=$PATH:/root/bin:/usr/local/bin
-          trivy image \
-            --severity HIGH,CRITICAL \
-            --format template \
-            --template "@contrib/html.tpl" \
-            --output trivy-report.html \
-            $IMAGE_NAME:$IMAGE_TAG
+         export PATH=$PATH:/root/bin:/usr/local/bin
+         trivy image \
+         --severity HIGH,CRITICAL \
+         --format template \
+         --template ./html.tpl \
+         --output trivy-report.html \
+         $IMAGE_NAME:$IMAGE_TAG
 
       # ----------------------------
       # Upload Trivy Report
