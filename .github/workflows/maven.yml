@@ -69,11 +69,11 @@ jobs:
 # MANUAL APPROVAL JOB
 # ============================
   approval:
-    name: Manual Approval
+    name: Manual Approval2
     needs: ci
     runs-on: ubuntu-latest
     environment:
-      name: manual-approval
+      name: manual-approval2
     steps:
       - name: Waiting for approval
         run: echo "Waiting for manual approval to continue deployment"
