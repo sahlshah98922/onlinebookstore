@@ -1,4 +1,4 @@
-name: Parameterized CI Pipeline
+name: Parameterized CI Pipeline with Manual Approval
 
 on:
   workflow_dispatch:
@@ -16,11 +16,12 @@ env:
   IMAGE_NAME: onlinebookstore
   IMAGE_TAG: ${{ github.sha }}
 
+# ============================
+# CI + DOCKER BUILD & PUSH
+# ============================
 jobs:
-  # ============================
-  # CI JOB
-  # ============================
   ci:
+    name: Build, Scan & Docker Push
     runs-on: self-hosted
 
     steps:
@@ -36,7 +37,7 @@ jobs:
       - name: Maven Build
         run: mvn clean package -DskipTests
 
-      - name: Sonar Scan
+      - name: SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
@@ -47,53 +48,43 @@ jobs:
 
       - name: Docker Build
         run: |
-          docker build --no-cache \
-            -t $IMAGE_NAME:$IMAGE_TAG \
-            -t $IMAGE_NAME:${{ inputs.env }} \
-            .
-
-      - name: Trivy Scan
-        run: |
-          export PATH=$PATH:/usr/local/bin:/root/bin
-          trivy image \
-            --severity HIGH,CRITICAL \
-            --format template \
-            --template ./html.tpl \
-            --output trivy-report.html \
-            $IMAGE_NAME:$IMAGE_TAG
-
-      - name: Upload Trivy Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-security-report
-          path: trivy-report.html
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+          docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:${{ inputs.env }}
 
       - name: Login to DockerHub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
+             -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Push Docker Image
+      - name: Docker Push
         run: |
-          docker tag $IMAGE_NAME:$IMAGE_TAG ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
+          docker tag $IMAGE_NAME:$IMAGE_TAG \
+            ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
           docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$IMAGE_TAG
 
-          docker tag $IMAGE_NAME:${{ inputs.env }} ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ inputs.env }}
+          docker tag $IMAGE_NAME:${{ inputs.env }} \
+            ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ inputs.env }}
           docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ inputs.env }}
 
-  # ============================
-  # MANUAL APPROVAL (PAUSE HERE)
-  # ============================
+# ============================
+# MANUAL APPROVAL JOB
+# ============================
   approval:
+    name: Manual Approval
     needs: ci
     runs-on: ubuntu-latest
     environment:
       name: manual-approval
+    steps:
+      - name: Waiting for approval
+        run: echo "Waiting for manual approval to continue deployment"
 
-  # ============================
-  # DEPLOY (RESUMES AFTER APPROVAL)
-  # ============================
+# ============================
+# DEPLOY JOB (AFTER APPROVAL)
+# ============================
   deploy:
+    name: Deploy Application
     needs: approval
     runs-on: self-hosted
     steps:
-      - name: Mock Deployment
-        run: echo "Deployment started after manual approvall"
+      - name: Deploy Step
+        run: echo "🚀 Deployment started after approval for ${{ inputs.env }}"
