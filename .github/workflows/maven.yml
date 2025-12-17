@@ -15,7 +15,7 @@ on:
 env:
   IMAGE_NAME: onlinebookstore
   IMAGE_TAG: ${{ github.sha }}
-  LOG_DIR: ci-logs
+  LOG_DIR: /home/github/actions-runner/_work/
 
 jobs:
   ci:
