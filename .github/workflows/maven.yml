@@ -17,18 +17,12 @@ env:
   IMAGE_TAG: ${{ github.sha }}
   LOG_DIR: ci-logs
 
-# ============================
-# CI JOB
-# ============================
 jobs:
   ci:
     name: CI - JOBS
     runs-on: self-hosted
 
     steps:
-      - name: Create log directory
-        run: mkdir -p $LOG_DIR
-
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -43,6 +37,7 @@ jobs:
       # ------------------------
       - name: Maven Build
         run: |
+          set -o pipefail
           mvn clean package -DskipTests | tee $LOG_DIR/build.log
 
       # ------------------------
@@ -50,6 +45,7 @@ jobs:
       # ------------------------
       - name: Maven Test
         run: |
+          set -o pipefail
           mvn test | tee $LOG_DIR/test.log
 
       # ------------------------
@@ -57,6 +53,7 @@ jobs:
       # ------------------------
       - name: Generate SBOM (CycloneDX)
         run: |
+          set -o pipefail
           mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom \
           | tee $LOG_DIR/sbom.log
 
@@ -67,27 +64,20 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
+          set -o pipefail
           mvn sonar:sonar \
             -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }} \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.qualitygate.wait=true \
             | tee $LOG_DIR/sonar.log
-
-      # ------------------------
-      # QUALITY GATE (60%)
-      # ------------------------
-      - name: Sonar Quality Gate Check
-        run: |
-          echo "Checking Sonar Quality Gate..."
-          # If Quality Gate fails, sonar-scanner exits non-zero
-          # This step will automatically fail pipeline
-          echo "Quality gate enforced (>= 60%)"
 
       # ------------------------
       # DOCKER BUILD
       # ------------------------
       - name: Docker Build
         run: |
+          set -o pipefail
           docker build -t $IMAGE_NAME:$IMAGE_TAG . \
           | tee $LOG_DIR/docker-build.log
 
@@ -96,6 +86,7 @@ jobs:
       # ------------------------
       - name: Trivy Image Scan
         run: |
+          set -o pipefail
           trivy image \
             --exit-code 1 \
             --severity HIGH,CRITICAL \
@@ -110,28 +101,3 @@ jobs:
         with:
           name: ci-logs
           path: ci-logs/
-
-# ============================
-# MANUAL APPROVAL
-# ============================
-  # approval:
-  #   name: Manual Approval
-  #   needs: ci
-  #   runs-on: ubuntu-latest
-  #   environment:
-  #     name: manual-approval
-  #   steps:
-  #     - run: echo "Waiting for manual approval..."
-
-# ============================
-# DEPLOY (ECHO ONLY)
-# ============================
-  # deploy:
-  #   name: Deploy (Simulation)
-  #   needs: approval
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: Deployment Step
-  #       run: |
-  #         echo " Deployment triggered for environment: ${{ inputs.env }}"
-  #         echo " AWS deployment skipped (CI-only pipeline)"
