@@ -107,6 +107,15 @@ jobs:
           name: ci-logs
           path: /home/github/actions-runner/_work/ci-logs
 
+      - name: Notify Jira of success
+        if: success()   # Only runs if all previous steps succeed
+        uses: atlassian/gajira-transition@v3
+        with:
+          issue: ${{ github.event.client_payload.jira_key }}   # This comes from your Jira webhook!
+          transition: Done                                     # Change to your exact "Done" status name
+          jira-token: ${{ secrets.JIRA_API_TOKEN }}
+          jira-base-url: ${{ secrets.JIRA_BASE_URL }}
+
 
           
           
