@@ -109,12 +109,17 @@ jobs:
 
       - name: Notify Jira of success
         if: success()   # Only runs if all previous steps succeed
+        uses: atlassian/gajira-login@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      - name: Transition Jira Issue to Done
         uses: atlassian/gajira-transition@v3
         with:
-          issue: ${{ github.event.client_payload.jira_key }}   # This comes from your Jira webhook!
-          transition: Done                                     # Change to your exact "Done" status name
-          jira-token: ${{ secrets.JIRA_API_TOKEN }}
-          jira-base-url: ${{ secrets.JIRA_BASE_URL }}
+          issue: ${{ github.event.client_payload.jira_key }}
+          transition: Done
 
 
           
