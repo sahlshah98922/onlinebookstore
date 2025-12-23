@@ -11,6 +11,8 @@ on:
           - dev
           - uat
           - prod
+  repository_dispatch:  # New: for Jira trigger
+    types: [jira-to-in-progress]  # Custom event type
 
 env:
   IMAGE_NAME: onlinebookstore
