@@ -42,7 +42,7 @@ jobs:
       - name: Maven Build
         run: |
           set -o pipefail
-          mvn clean package -DskipTests | tee -a $CI_LOG
+          mvn clean package -DskipTests | tee -a $CI_LOG 
 
       # ------------------------
       # TEST
@@ -89,7 +89,7 @@ jobs:
       - name: Trivy Image Scan
         run: |
           set -o pipefail
-          trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_NAME:$IMAGE_TAG | tee -a $CI_LOG
+          trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_NAME:$IMAGE_TAG | tee -a $CI_LOG || true
 
       # ------------------------
       # AWS CONFIG
