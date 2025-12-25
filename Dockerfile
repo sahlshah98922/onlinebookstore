@@ -1,13 +1,13 @@
-FROM eclipse-temurin:11-jdk
- 
-WORKDIR /app
- 
-# Copy JAR from target folder
-COPY target/*.jar app.jar
- 
+FROM tomcat:9.0-jdk11
+
+WORKDIR /usr/local/tomcat/webapps
+
+COPY target/*.war ROOT.war
+
 EXPOSE 8085
- 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+CMD ["catalina.sh", "run"]
+
 
 
 
