@@ -120,7 +120,7 @@ jobs:
         run: |
           aws ecs update-service \
             --cluster gitaction-cluster \
-            --service onlinebookstore-service \
+            --service gitaction-onlinebookstore-task-service-3 \
             --force-new-deployment | tee -a $CI_LOG
 
       # ------------------------
