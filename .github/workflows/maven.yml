@@ -11,13 +11,15 @@ on:
           - dev
           - uat
           - prod
-  repository_dispatch:  # New: for Jira trigger
-    types: [jira-to-in-progress]  # Custom event type
+  repository_dispatch:
+    types: [jira-to-in-progress]
 
 env:
   IMAGE_NAME: onlinebookstore
-  IMAGE_TAG: ${{ github.sha }}
+  ECR_REPOSITORY: gitactionrepo
+  IMAGE_TAG: ${{ github.run_number }}
   LOG_DIR: /home/github/actions-runner/_work/ci-logs
+  CI_LOG: /home/github/actions-runner/_work/ci-logs/ci.log
 
 jobs:
   ci:
@@ -40,7 +42,7 @@ jobs:
       - name: Maven Build
         run: |
           set -o pipefail
-          mvn clean package -DskipTests | tee $LOG_DIR/build.log
+          mvn clean package -DskipTests | tee -a $CI_LOG
 
       # ------------------------
       # TEST
@@ -48,7 +50,7 @@ jobs:
       - name: Maven Test
         run: |
           set -o pipefail
-          mvn test | tee $LOG_DIR/test.log
+          mvn test | tee -a $CI_LOG
 
       # ------------------------
       # SBOM
@@ -56,10 +58,7 @@ jobs:
       - name: Generate SBOM (CycloneDX)
         run: |
           set -o pipefail
-          mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom \
-            | tee $LOG_DIR/sbom.log
-          
-          # Copy actual SBOM report
+          mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom | tee -a $CI_LOG
           cp target/bom.xml $LOG_DIR/sbom.xml
 
       # ------------------------
@@ -74,8 +73,7 @@ jobs:
             -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }} \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.qualitygate.wait=true \
-            | tee $LOG_DIR/sonar.log
+            -Dsonar.qualitygate.wait=true | tee -a $CI_LOG
 
       # ------------------------
       # DOCKER BUILD
@@ -83,8 +81,7 @@ jobs:
       - name: Docker Build
         run: |
           set -o pipefail
-          docker build -t $IMAGE_NAME:$IMAGE_TAG . \
-            | tee $LOG_DIR/docker-build.log
+          docker build -t $IMAGE_NAME:$IMAGE_TAG . | tee -a $CI_LOG
 
       # ------------------------
       # TRIVY SCAN
@@ -92,14 +89,42 @@ jobs:
       - name: Trivy Image Scan
         run: |
           set -o pipefail
-          trivy image \
-            --exit-code 1 \
-            --severity HIGH,CRITICAL \
-            $IMAGE_NAME:$IMAGE_TAG \
-            | tee $LOG_DIR/trivy.log
+          trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_NAME:$IMAGE_TAG | tee -a $CI_LOG
 
       # ------------------------
-      # ARCHIVE LOGS + SBOM
+      # AWS CONFIG
+      # ------------------------
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ------------------------
+      # PUSH IMAGE
+      # ------------------------
+      - name: Push Image to ECR
+        run: |
+          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${ECR_REPOSITORY}
+          docker tag $IMAGE_NAME:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
+          docker push $ECR_URI:$IMAGE_TAG | tee -a $CI_LOG
+
+      # ------------------------
+      # DEPLOY
+      # ------------------------
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster gitaction-cluster \
+            --service onlinebookstore-service \
+            --force-new-deployment | tee -a $CI_LOG
+
+      # ------------------------
+      # ARCHIVE LOGS
       # ------------------------
       - name: Upload CI Logs
         uses: actions/upload-artifact@v4
@@ -107,8 +132,11 @@ jobs:
           name: ci-logs
           path: /home/github/actions-runner/_work/ci-logs
 
+      # ------------------------
+      # JIRA
+      # ------------------------
       - name: Notify Jira of success
-        if: success()   # Only runs if all previous steps succeed
+        if: success()
         uses: atlassian/gajira-login@v3
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
@@ -120,7 +148,3 @@ jobs:
         with:
           issue: ${{ github.event.client_payload.jira_key }}
           transition: Done
-
-
-          
-          
