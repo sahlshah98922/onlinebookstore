@@ -19,7 +19,7 @@ env:
   ECR_REPOSITORY: gitactionrepo
   IMAGE_TAG: ${{ github.run_number }}
   LOG_DIR: /home/github/actions-runner/_work/ci-logs
-  CI_LOG: /home/github/actions-runner/_work/ci-logs/ci.log
+  CI_LOG: /home/github/actions-runner/_work/ci-logs/${{ github.run_number }}.log
 
 jobs:
   cicd:
