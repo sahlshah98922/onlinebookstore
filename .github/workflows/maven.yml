@@ -35,7 +35,6 @@ jobs:
       # ------------------------
       - name: Maven Build
         run: |
-          set -o pipefail
           mvn clean package -DskipTests | tee -a $CI_LOG 
 
       # ------------------------
@@ -43,7 +42,6 @@ jobs:
       # ------------------------
       - name: Maven Test
         run: |
-          set -o pipefail
           mvn test | tee -a $CI_LOG
 
       # ------------------------
@@ -51,7 +49,6 @@ jobs:
       # ------------------------
       - name: Generate SBOM (CycloneDX)
         run: |
-          set -o pipefail
           mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom | tee -a $CI_LOG
           cp target/bom.xml $LOG_DIR/sbom.xml
 
@@ -62,7 +59,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          set -o pipefail
           mvn sonar:sonar \
             -Dsonar.projectKey=OnlineBookStore-${{ inputs.env }} \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
@@ -74,7 +70,6 @@ jobs:
       # ------------------------
       - name: Docker Build
         run: |
-          set -o pipefail
           docker build -t $IMAGE_NAME:$IMAGE_TAG . | tee -a $CI_LOG
 
       # ------------------------
@@ -82,7 +77,6 @@ jobs:
       # ------------------------
       - name: Trivy Image Scan
         run: |
-          set -o pipefail
           trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_NAME:$IMAGE_TAG | tee -a $CI_LOG || true
 
       # ------------------------
