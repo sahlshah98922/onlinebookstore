@@ -90,13 +90,17 @@ jobs:
       # ------------------------
       - name: OWASP Dependency Check
         run: |
+          mkdir -p $LOG_DIR/odc-data
+
           dependency-check \
             --project "onlinebookstore-${{ github.run_number }}" \
             --scan . \
             -f HTML \
             -f JSON \
             --out $LOG_DIR/owasp-${{ github.run_number }} \
+            --data $LOG_DIR/odc-data \
             --failOnCVSS 9 | tee -a $CI_LOG
+
 
 
       # ------------------------
