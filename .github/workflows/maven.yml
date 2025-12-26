@@ -90,7 +90,7 @@ jobs:
       # ------------------------
       - name: OWASP Dependency Check
         run: |
-          dependency-check.sh \
+          dependency-check \
             --project "onlinebookstore-${{ github.run_number }}" \
             --scan . \
             --format "HTML,JSON" \
