@@ -99,7 +99,9 @@ jobs:
             -f JSON \
             --out $LOG_DIR/owasp-${{ github.run_number }} \
             --data $LOG_DIR/odc-data \
+            --nvdApiKey ${{ secrets.NVD_API_KEY }} \
             --failOnCVSS 9 | tee -a $CI_LOG
+
 
 
 
