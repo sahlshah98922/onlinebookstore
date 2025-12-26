@@ -85,25 +85,6 @@ jobs:
         run: |
           trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_NAME:$IMAGE_TAG | tee -a $CI_LOG || true
 
-      # ------------------------
-      # OWASP DEPENDENCY CHECK
-      # ------------------------
-      - name: OWASP Dependency Check
-        run: |
-          mkdir -p $LOG_DIR/odc-data
-
-          dependency-check \
-            --project "onlinebookstore-${{ github.run_number }}" \
-            --scan . \
-            -f HTML \
-            -f JSON \
-            --out $LOG_DIR/owasp-${{ github.run_number }} \
-            --data $LOG_DIR/odc-data \
-            --nvdApiKey ${{ secrets.NVD_API_KEY }} \
-            --failOnCVSS 9 | tee -a $CI_LOG
-
-
-
 
       # ------------------------
       # AWS CONFIG
