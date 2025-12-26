@@ -93,9 +93,11 @@ jobs:
           dependency-check \
             --project "onlinebookstore-${{ github.run_number }}" \
             --scan . \
-            --format "HTML,JSON" \
+            -f HTML \
+            -f JSON \
             --out $LOG_DIR/owasp-${{ github.run_number }} \
             --failOnCVSS 9 | tee -a $CI_LOG
+
 
       # ------------------------
       # AWS CONFIG
