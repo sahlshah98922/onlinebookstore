@@ -12,7 +12,7 @@ on:
           - uat
           - prod
   repository_dispatch:
-    types: [jira-to-in-progress]
+    types: [jira-trigger]
 
 env:
   IMAGE_NAME: onlinebookstore
