@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: onlinebookstore
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: onlinebookstore
+  template:
+    metadata:
+      labels:
+        app: onlinebookstore
+    spec:
+      containers:
+      - name: onlinebookstore
+        image: shahnawaz312/onlinebookstore:1.0
+        ports:
+        - containerPort: 8080
+
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8080
+          failureThreshold: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 3
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 3
