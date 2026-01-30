@@ -1,0 +1,9 @@
+version: "3.8"
+
+services:
+  onlinebookstore:
+    image: shahnawaz312/onlinebookstore:${IMAGE_TAG}
+    container_name: onlinebookstore
+    ports:
+      - "8080:8080"
+    restart: always
