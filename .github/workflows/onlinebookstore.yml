@@ -6,9 +6,10 @@ on:
       - main 
 
 jobs:
-  # ================= CI JOB (Runs on Build Machine) =================
+  # ================= CI JOB (Runs strictly on Build Runner) =================
   build-and-push:
-    runs-on: [self-hosted, Linux, X64]
+    # Aapke naye runner ka exact naam explicitly target kiya hai
+    runs-on: cd-runner-build
     name: Code Build and Docker Push
     steps:
     - name: Checkout Code
@@ -26,10 +27,11 @@ jobs:
     - name: Push Image to Docker Hub
       run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/onlinebookstore:latest
 
-  # ================= CD JOB (Runs on Kubeadm Master Node) =================
+  # ================= CD JOB (Runs strictly on Kubeadm Master Node) =================
   deploy-to-kubeadm:
     needs: build-and-push
-    runs-on: [self-hosted, Linux, X64]
+    # Aapke purane master runner node ka exact naam target kiya hai
+    runs-on: master
     name: Kubernetes Cluster Deployment
     steps:
     - name: Checkout Manifests
@@ -37,8 +39,6 @@ jobs:
 
     - name: Apply Kubernetes Manifests
       run: |
-        # Manifest apply karein
         kubectl apply -f deployment.yaml
-        
-        # Nayi image force pull karne ke liye rollout restart (Aapke deployment ke naam ke sath)
         kubectl rollout restart deployment/onlinebookstore
+
