@@ -1,4 +1,4 @@
-name: Deploy to Oracle Linux Tomcat
+name: Deploy to Kubeadm Cluster (Dockerized)
 
 on:
   push:
@@ -6,29 +6,39 @@ on:
       - main 
 
 jobs:
-  build-and-deploy:
-    runs-on: self-hosted 
-
+  # ================= CI JOB (Runs on Build Machine) =================
+  build-and-push:
+    runs-on: [self-hosted, Linux, X64]
+    name: Code Build and Docker Push
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # 2. Maven se project build karke WAR file banana
     - name: Build with Maven
       run: mvn clean package -DskipTests
 
-    # 3. WAR file ko safe name dena (onlinebookstore.war)
-    - name: Rename WAR file
-      run: mv target/*.war target/onlinebookstore.war
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-    # 4. Local Commands se file ko Worker Node par bhejna
-    - name: Transfer and Deploy to Worker Node Tomcat
+    - name: Build Docker Image
+      run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/onlinebookstore:latest .
+
+    - name: Push Image to Docker Hub
+      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/onlinebookstore:latest
+
+  # ================= CD JOB (Runs on Kubeadm Master Node) =================
+  deploy-to-kubeadm:
+    needs: build-and-push
+    runs-on: [self-hosted, Linux, X64]
+    name: Kubernetes Cluster Deployment
+    steps:
+    - name: Checkout Manifests
+      uses: actions/checkout@v4
+
+    - name: Apply Kubernetes Manifests
       run: |
-        WORKER_IP="${{ secrets.SERVER_IP }}"
-        WORKER_USER="${{ secrets.SERVER_USER }}"
+        # Manifest apply karein
+        kubectl apply -f deployment.yaml
         
-        # Step A: Worker node ke tomcat se purani application saaf karein
-        ssh -o StrictHostKeyChecking=no ${WORKER_USER}@${WORKER_IP} "rm -rf /home/sahil/tomcat/webapps/onlinebookstore.war /home/sahil/tomcat/webapps/onlinebookstore"
-        
-        # Step B: Nayi war file ko Master se Worker node par copy karein
-        scp -o StrictHostKeyChecking=no target/onlinebookstore.war ${WORKER_USER}@${WORKER_IP}:/home/sahil/tomcat/webapps/
+        # Nayi image force pull karne ke liye rollout restart (Aapke deployment ke naam ke sath)
+        kubectl rollout restart deployment/onlinebookstore
