@@ -6,10 +6,10 @@ on:
       - main 
 
 jobs:
-  # ================= CI JOB (Runs strictly on Build Runner) =================
+  # ================= CI JOB =================
   build-and-push:
-    # Aapke naye runner ka exact naam explicitly target kiya hai
-    runs-on: cd-runner-build
+    # Custom name ki jagah default array labels ka use karein jo dono machine pe hain
+    runs-on: [self-hosted, Linux, X64]
     name: Code Build and Docker Push
     steps:
     - name: Checkout Code
@@ -27,11 +27,11 @@ jobs:
     - name: Push Image to Docker Hub
       run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/onlinebookstore:latest
 
-  # ================= CD JOB (Runs strictly on Kubeadm Master Node) =================
+  # ================= CD JOB =================
   deploy-to-kubeadm:
     needs: build-and-push
-    # Aapke purane master runner node ka exact naam target kiya hai
-    runs-on: master
+    # Yahan bhi default labels ka use karein
+    runs-on: [self-hosted, Linux, X64]
     name: Kubernetes Cluster Deployment
     steps:
     - name: Checkout Manifests
@@ -39,6 +39,6 @@ jobs:
 
     - name: Apply Kubernetes Manifests
       run: |
+        # Kubeadm setup ko target karne ke liye kubectl command execute karein
         kubectl apply -f deployment.yaml
         kubectl rollout restart deployment/onlinebookstore
-
