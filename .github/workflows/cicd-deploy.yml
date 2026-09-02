@@ -1,35 +1,42 @@
-name: CICD
+name: Deploy to Kubeadm Cluster (Dockerized)
 
 on:
   push:
-    branches: [ main ]
-
-env:
-  IMAGE_NAME: shahnawaz312/onlinebookstore
-  IMAGE_TAG: ${{ github.run_number }}
+    branches:
+      - main 
 
 jobs:
-  cicd:
-    runs-on: self-hosted
+  # ================= CI JOB (Runs strictly on Build Runner) =================
+  build-and-push:
+    runs-on: cd-runner-build
+    name: Code Build and Docker Push
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
-      - name: Build Java App
-        run: mvn clean package -DskipTests
+    - name: Build with Maven
+      run: mvn clean package -DskipTests
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t $IMAGE_NAME:$IMAGE_TAG .
-          docker push $IMAGE_NAME:$IMAGE_TAG
+    # `${{ secrets.DOCKERHUB_USERNAME }}` likhne se ye automatic sahlshah98922 use karega
+    - name: Build Docker Image
+      run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/onlinebookstore:latest .
 
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl apply -f deployment.yaml
-          kubectl apply -f service.yaml
+    - name: Push Image to Docker Hub
+      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/onlinebookstore:latest
+
+  # ================= CD JOB (Runs strictly on Kubeadm Master Node) =================
+  deploy-to-kubeadm:
+    needs: build-and-push
+    runs-on: master
+    name: Kubernetes Cluster Deployment
+    steps:
+    - name: Checkout Manifests
+      uses: actions/checkout@v4
+
+    - name: Apply Kubernetes Manifests
+      run: |
+        kubectl apply -f deployment.yaml
+        kubectl rollout restart deployment/onlinebookstore
